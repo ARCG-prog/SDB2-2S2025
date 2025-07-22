@@ -22,13 +22,12 @@ Requisitos:
     - Puerto: `5432`
     - Usuario: `fernando`
     - Contraseña: `S8DB2S2025`
-6. Conectar al servidor y crear una nueva base de datos llamada `clase1`.
-7. Ejecutar el script `data.sql` para crear las tablas y cargar los datos iniciales en la base de datos `clase1`.
-8. Verificar que las tablas se han creado correctamente y que los datos se han insertado.
+6. Conectar al servidor y crear una nueva base de datos llamada `clase2`.
+7. Ejecutar los scripts `blocking.sql`, `deadlock.sql` y `savepoints.sql` en la base de datos `clase2`.
 
 ## Notas
 
 - Asegúrate de que Docker y Docker Compose están instalados y funcionando correctamente.
-- Puedes usar DBeaver o cualquier otro cliente SQL para conectarte a la base de datos `clase1` si prefieres no usar pgAdmin.
+- Puedes usar DBeaver o cualquier otro cliente SQL para conectarte a la base de datos `clase2` si prefieres no usar pgAdmin.
 - Si tienes problemas con la conexión, verifica que los contenedores de Docker están corriendo correctamente con el comando `docker ps`.
 - Puedes detener los contenedores con `docker-compose down` cuando hayas terminado la clase.
