@@ -1,0 +1,32 @@
+services:
+  master:
+    image: postgres:15.3
+    container_name: pg-master
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: replicator
+      POSTGRES_PASSWORD: replica_pass
+      POSTGRES_DB: demo
+    volumes:
+      - ./master:/var/lib/postgresql/conf
+    command: >
+      postgres -c config_file=/var/lib/postgresql/conf/postgresql.conf
+
+  slave:
+    image: postgres:15.3
+    container_name: pg-slave
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: replicator
+      POSTGRES_PASSWORD: replica_pass
+      POSTGRES_DB: demo
+    depends_on:
+      - master
+    volumes:
+      - ./slave:/var/lib/postgresql/conf
+    command: >
+      postgres -c config_file=/var/lib/postgresql/conf/postgresql.conf
