@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:15.3
+    container_name: pg_pitr
+    environment:
+      - POSTGRES_USER=fernando
+      - POSTGRES_PASSWORD=S8DB2S2025
+      - POSTGRES_DB=bases2-db
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./wal_archive:/var/lib/postgresql/wal_archive
+    ports:
+      - 5432:5432

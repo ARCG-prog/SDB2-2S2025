@@ -1,4 +1,4 @@
-# Clase 1
+# Clase 2
 
 Requisitos:
 
