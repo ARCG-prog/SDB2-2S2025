@@ -250,9 +250,6 @@ ALTER TABLE ONLY public.services ALTER COLUMN service_id SET DEFAULT nextval('pu
 --
 
 COPY public.appointments (appointment_id, client_id, employee_id, service_id, appointment_time, status, notes) FROM stdin;
-1	1	1	1	2025-07-22 10:00:00	Completed	Client requested layered style
-2	2	2	3	2025-07-22 13:00:00	Scheduled	\N
-3	3	3	4	2025-07-23 09:00:00	Scheduled	First visit
 \.
 
 
@@ -261,9 +258,9 @@ COPY public.appointments (appointment_id, client_id, employee_id, service_id, ap
 --
 
 COPY public.clients (client_id, full_name, email, phone, created_at) FROM stdin;
-1	Anna Lopez	anna@example.com	+50212345678	2025-07-25 04:06:41.713475
-2	Michael Smith	michael.smith@example.com	+50298765432	2025-07-25 04:06:41.713475
-3	Laura Reyes	laura.reyes@example.com	+50224681357	2025-07-25 04:06:41.713475
+1	Anna Lopez	anna@example.com	+50212345678	2025-08-07 00:02:29.841546
+2	Michael Smith	michael.smith@example.com	+50298765432	2025-08-07 00:02:29.841546
+3	Laura Reyes	laura.reyes@example.com	+50224681357	2025-08-07 00:02:29.841546
 \.
 
 
@@ -283,7 +280,6 @@ COPY public.employees (employee_id, name, role, email, is_active) FROM stdin;
 --
 
 COPY public.payments (payment_id, appointment_id, amount_paid, payment_method, payment_date) FROM stdin;
-1	1	20.00	Cash	2025-07-25 04:06:41.713475
 \.
 
 
@@ -324,7 +320,7 @@ SELECT pg_catalog.setval('public.employees_employee_id_seq', 3, true);
 -- Name: payments_payment_id_seq; Type: SEQUENCE SET; Schema: public; Owner: fernando
 --
 
-SELECT pg_catalog.setval('public.payments_payment_id_seq', 1, true);
+SELECT pg_catalog.setval('public.payments_payment_id_seq', 2, true);
 
 
 --

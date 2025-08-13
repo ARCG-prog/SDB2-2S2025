@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego - Recuperación de Datos</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f8fa; margin: 0; padding: 0; }
+  .container { max-width: 800px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .stats { display: flex; gap: 20px; }
+  .stat { font-size: 0.9rem; }
+  .progress { background: #ddd; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 20px; }
+  .progress-bar { background: teal; height: 100%; transition: width 0.3s ease; }
+  h2 { font-size: 1.2rem; }
+  .choices { display: grid; gap: 10px; margin-top: 15px; }
+  button.choice { padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; cursor: pointer; text-align: left; }
+  button.choice.correct { background: #c8f7c5; border-color: #27ae60; }
+  button.choice.incorrect { background: #f7c5c5; border-color: #e74c3c; }
+  .explanation { margin-top: 15px; padding: 10px; background: #eef6ff; border-left: 4px solid #2980b9; }
+  .controls { margin-top: 20px; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="stats">
+      <div class="stat">❤️ <span id="hearts">3</span></div>
+      <div class="stat">⭐ <span id="xp">0</span> XP</div>
+      <div class="stat">🔥 Racha <span id="streak">0</span></div>
+    </div>
+    <div>Lección: Recuperación de Datos</div>
+  </header>
+  <div class="progress"><div id="progressBar" class="progress-bar" style="width: 0%"></div></div>
+  <h2 id="prompt"></h2>
+  <div id="choices" class="choices"></div>
+  <div id="explanation" class="explanation" style="display:none;"></div>
+  <div class="controls">
+    <button id="restart">Reiniciar</button>
+    <button id="next" disabled>Siguiente</button>
+  </div>
+</div>
+
+<script>
+const bank = [
+  { prompt: "¿Qué mide el RPO (Recovery Point Objective)?", choices: ["Tiempo máximo para volver a operar", "Cantidad máxima de pérdida de datos aceptable", "Cantidad de servidores necesarios para el DR", "Porcentaje de disponibilidad anual"], correctIndex: 1, explanation: "RPO define hasta cuánto dato se puede perder (en tiempo) tras un incidente." },
+  { prompt: "¿Qué tipo de respaldo copia solo los cambios desde el último respaldo de cualquier tipo?", choices: ["Completo", "Incremental", "Diferencial", "Snapshot"], correctIndex: 1, explanation: "El incremental toma cambios desde el último respaldo (sea completo o incremental)." },
+  { prompt: "¿Qué técnica permite volver a un instante exacto antes de un error lógico?", choices: ["Replicación", "Particionado", "PITR", "Sharding"], correctIndex: 2, explanation: "PITR aplica la cadena de logs para llegar al segundo deseado." },
+  { prompt: "¿Cuál es la regla clásica de copias 3-2-1?", choices: ["3 on-prem, 2 en la nube, 1 en cinta", "3 copias, 2 medios distintos, 1 offsite (ideal: 1 inmutable)", "3 completos, 2 incrementales, 1 diferencial", "3 backups semanales, 2 mensuales, 1 anual"], correctIndex: 1, explanation: "3 copias en 2 medios distintos con 1 fuera de sitio; hoy se recomienda inmutable." },
+  { prompt: "Mapea el log correcto con el motor de BD: PostgreSQL usa…", choices: ["Transaction Log", "WAL", "Binary Log", "Redo Log"], correctIndex: 1, explanation: "PostgreSQL utiliza WAL (Write-Ahead Log)." }
+];
+
+let index = 0, hearts = 3, xp = 0, streak = 0;
+let answered = false;
+
+function renderQuestion() {
+  const q = bank[index];
+  document.getElementById("prompt").textContent = q.prompt;
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+  q.choices.forEach((choice, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = choice;
+    btn.className = "choice";
+    btn.onclick = () => handleChoice(i);
+    choicesDiv.appendChild(btn);
+  });
+  document.getElementById("explanation").style.display = "none";
+  document.getElementById("next").disabled = true;
+  answered = false;
+  updateStats();
+  document.getElementById("progressBar").style.width = ((index)/bank.length)*100 + "%";
+}
+
+function handleChoice(i) {
+  if (answered) return;
+  answered = true;
+  const q = bank[index];
+  const buttons = document.querySelectorAll(".choice");
+  buttons.forEach((btn, idx) => {
+    if (idx === q.correctIndex) btn.classList.add("correct");
+    if (idx === i && idx !== q.correctIndex) btn.classList.add("incorrect");
+    btn.disabled = true;
+  });
+  if (i === q.correctIndex) { xp += 10; streak += 1; }
+  else { hearts -= 1; streak = 0; }
+  document.getElementById("explanation").style.display = "block";
+  document.getElementById("explanation").textContent = q.explanation;
+  document.getElementById("next").disabled = false;
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById("hearts").textContent = hearts;
+  document.getElementById("xp").textContent = xp;
+  document.getElementById("streak").textContent = streak;
+}
+
+document.getElementById("next").onclick = () => {
+  if (index < bank.length - 1 && hearts > 0) {
+    index++;
+    renderQuestion();
+  }
+};
+document.getElementById("restart").onclick = () => {
+  index = 0; hearts = 3; xp = 0; streak = 0;
+  renderQuestion();
+};
+
+renderQuestion();
+</script>
+</body>
+</html>

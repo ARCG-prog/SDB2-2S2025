@@ -12,6 +12,7 @@ services:
     volumes:
       - ./postgres:/var/lib/postgresql/data
       - ./wal-archive:/var/lib/postgresql/wal_archive
+      - ./pgbackrest-data:/var/lib/pgbackrest
 
   pdAdmin:
     image: dpage/pgadmin4

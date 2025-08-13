@@ -1,0 +1,33 @@
+services:
+  master1:
+    image: postgres:15
+    container_name: master1-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: demo
+    ports:
+      - "5435:5432"
+    volumes:
+      - ./init-master.sql:/docker-entrypoint-initdb.d/init.sql
+
+  master2:
+    image: postgres:15
+    container_name: master2-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: demo
+    ports:
+      - "5436:5432"
+    volumes:
+      - ./init-replica.sql:/docker-entrypoint-initdb.d/init.sql
+
+  bucardo:
+    build: ./bucardo
+    container_name: bucardo
+    depends_on:
+      - master1
+      - master2
+    stdin_open: true
+    tty: true

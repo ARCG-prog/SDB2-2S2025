@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicación Interactiva: Estrategias de Recuperación de Datos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A single-page application with a fixed sidebar for navigation and a main content area. This non-linear structure allows users to freely explore the six core topics from the report without a rigid, slide-by-slide progression. Key interactions include an interactive chart for data loss causes, toggleable cards for comparing backup types, and a dropdown-based scenario simulator. This design was chosen to transform passive presentation content into an active, self-directed learning tool, enhancing user engagement and comprehension. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Causes of Data Loss statistics. Goal: Inform/Compare. Viz: Doughnut Chart. Interaction: Hover for details. Justification: More engaging than a list, visually represents proportions effectively. Library: Chart.js.
+        - Report Info: Backup types (Full, Diff, Log). Goal: Compare/Organize. Viz: Interactive HTML cards/flow diagrams. Interaction: Click buttons to toggle between detailed views of each backup type's process. Justification: Facilitates direct comparison of complex processes in a structured way. Method: HTML/CSS/JS.
+        - Report Info: Disaster Scenarios. Goal: Inform/Simulate. Viz: Interactive text blocks. Interaction: User selects a scenario from a dropdown to see the corresponding recovery plan. Justification: Turns static examples into an active learning exercise, improving retention. Method: HTML/JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #4a4a4a;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .nav-link.active {
+            background-color: #eaddd7;
+            color: #795548;
+            border-left-color: #795548;
+        }
+        .nav-link:hover {
+            background-color: #f1e9e5;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .code-block {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #8d6e63;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #795548;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-white shadow-md fixed h-full">
+        <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800">Recuperación de Datos</h2>
+        </div>
+        <nav id="main-nav" class="mt-4">
+            <a href="#intro" class="nav-link block p-4 text-gray-700 font-semibold active">Introducción</a>
+            <a href="#full" class="nav-link block p-4 text-gray-700 font-semibold">Respaldos Completos</a>
+            <a href="#inc" class="nav-link block p-4 text-gray-700 font-semibold">Respaldos Inc/Dif</a>
+            <a href="#advanced" class="nav-link block p-4 text-gray-700 font-semibold">Técnicas Avanzadas</a>
+            <a href="#sim" class="nav-link block p-4 text-gray-700 font-semibold">Simulación</a>
+            <a href="#tools" class="nav-link block p-4 text-gray-700 font-semibold">Herramientas</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-6 md:p-10">
+        
+        <!-- Section 1: Introduction -->
+        <section id="intro" class="content-section active">
+            <h1 class="text-4xl font-bold mb-4 text-gray-800">Introducción a las Estrategias de Recuperación</h1>
+            <p class="mb-8 text-lg">Esta sección establece los cimientos, definiendo qué es la recuperación de datos, por qué es crucial para cualquier negocio y los conceptos clave que rigen cualquier estrategia de protección de la información. Explora las causas más comunes de pérdida de datos y cómo los objetivos de RPO y RTO determinan el enfoque a seguir.</p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-3 text-brown-700">¿Qué es la Recuperación de Datos?</h3>
+                    <p class="mb-4">Es el proceso de rescatar y restaurar información inaccesible, perdida o corrupta. Los objetivos principales son:</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>Minimizar la pérdida de datos.</li>
+                        <li>Reducir el tiempo de inactividad (downtime).</li>
+                        <li>Garantizar la continuidad del negocio.</li>
+                        <li>Restaurar el sistema a un estado consistente.</li>
+                    </ul>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-3 text-brown-700">Causas Comunes de Pérdida de Datos</h3>
+                    <div class="chart-container">
+                        <canvas id="causesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8 mt-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-3 text-brown-700">RPO: Objetivo de Punto de Recuperación</h3>
+                    <p class="text-lg font-semibold mb-2">Pregunta: ¿Cuánta información podemos permitirnos perder?</p>
+                    <p>Mide la cantidad máxima de datos perdidos, medida en tiempo. Un RPO de 1 hora significa que se perderán como máximo los datos de la última hora.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-bold mb-3 text-brown-700">RTO: Objetivo de Tiempo de Recuperación</h3>
+                    <p class="text-lg font-semibold mb-2">Pregunta: ¿Cuánto tiempo podemos estar inactivos?</p>
+                    <p>Mide el tiempo máximo que un sistema puede estar caído después de un fallo. Un RTO de 2 horas significa que el sistema debe estar operativo en menos de 2 horas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Full Backups -->
+        <section id="full" class="content-section">
+            <h1 class="text-4xl font-bold mb-4 text-gray-800">Recuperación con Respaldos Completos</h1>
+             <p class="mb-8 text-lg">Aquí exploramos el tipo de respaldo más fundamental: el respaldo completo. Aprenderás qué es, cómo funciona su proceso de creación y restauración, y verás ejemplos prácticos de código. Aunque es el método más simple, es crucial entender sus ventajas y desventajas para construir una estrategia sólida.</p>
+            
+            <div class="card p-6 mb-8">
+                <h3 class="text-2xl font-bold mb-3">¿Qué es un Respaldo Completo?</h3>
+                <p>Un respaldo completo (Full Backup) es una copia exacta de todo el conjunto de datos en un momento específico. Es la base para otras estrategias y el más simple de restaurar, pero también el que más tiempo y espacio consume.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-3">Práctica: Crear un Respaldo Completo</h3>
+                    <p class="mb-2 font-semibold">SQL Server (T-SQL)</p>
+                    <div class="code-block mb-4">
+BACKUP DATABASE MiEmpresaDB
+TO DISK = 'D:\Backups\MiEmpresaDB_Full.bak'
+WITH 
+    NAME = 'Respaldo Completo de MiEmpresaDB',
+    DESCRIPTION = 'Respaldo completo semanal';
+GO
+                    </div>
+                    <p class="mb-2 font-semibold">PostgreSQL (pg_dump)</p>
+                    <div class="code-block">
+pg_dump -U miusuario -F c -b -v -f D:\Backups\MiEmpresaDB_Full.backup MiEmpresaDB
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-3">Práctica: Restaurar un Respaldo Completo</h3>
+                    <p class="mb-2 font-semibold">SQL Server (T-SQL)</p>
+                    <div class="code-block">
+USE master;
+GO
+
+RESTORE DATABASE MiEmpresaDB
+FROM DISK = 'D:\Backups\MiEmpresaDB_Full.bak'
+WITH REPLACE;
+GO
+                    </div>
+                    <div class="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-r-lg">
+                        <p><span class="font-bold">Ventajas:</span> Restauración simple y rápida.</p>
+                        <p><span class="font-bold">Desventajas:</span> Consume mucho espacio, es lento de crear y se pierden todos los datos desde el último respaldo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Incremental/Differential Backups -->
+        <section id="inc" class="content-section">
+            <h1 class="text-4xl font-bold mb-4 text-gray-800">Respaldos Diferenciales y de Log (Incrementales)</h1>
+            <p class="mb-8 text-lg">Esta sección detalla estrategias más eficientes que el respaldo completo. Mediante botones interactivos, podrás comparar cómo funcionan los respaldos diferenciales y los de log de transacciones, entendiendo sus procesos de restauración y cómo ayudan a minimizar la pérdida de datos (RPO) y optimizar el uso de almacenamiento.</p>
+
+            <div class="card p-6">
+                <div id="backup-type-selector" class="flex space-x-2 mb-6 border-b pb-4">
+                    <button data-type="diff" class="btn btn-primary backup-btn">Diferencial</button>
+                    <button data-type="log" class="btn bg-gray-200 text-gray-700 backup-btn">Log de Transacciones</button>
+                </div>
+                
+                <div id="diff-content" class="backup-content">
+                    <h3 class="text-2xl font-bold mb-3">Respaldo Diferencial</h3>
+                    <p class="mb-4">Contiene <strong>todos los cambios realizados desde el último respaldo completo</strong>. Cada nuevo respaldo diferencial es más grande que el anterior dentro del mismo ciclo.</p>
+                    <h4 class="font-bold mt-4 mb-2">Proceso de Restauración:</h4>
+                    <p>Se necesitan solo 2 archivos: el último respaldo <strong>completo</strong> y el último respaldo <strong>diferencial</strong>.</p>
+                    <div class="code-block mt-2">
+-- 1. Restaurar el COMPLETO sin recuperar
+RESTORE DATABASE MiEmpresaDB
+FROM DISK = '..._Full.bak' WITH NORECOVERY;
+GO
+
+-- 2. Aplicar el último DIFERENCIAL y recuperar
+RESTORE DATABASE MiEmpresaDB
+FROM DISK = '..._Diff_Latest.bak' WITH RECOVERY;
+GO
+                    </div>
+                </div>
+
+                <div id="log-content" class="backup-content hidden">
+                    <h3 class="text-2xl font-bold mb-3">Respaldo de Log de Transacciones (Incremental)</h3>
+                    <p class="mb-4">Contiene <strong>todas las transacciones ocurridas desde el último respaldo de log</strong>. Permite una recuperación granular (a un punto en el tiempo) y minimiza la pérdida de datos.</p>
+                    <h4 class="font-bold mt-4 mb-2">Proceso de Restauración:</h4>
+                    <p>Se necesita una cadena ininterrumpida: el último <strong>completo</strong>, opcionalmente el último <strong>diferencial</strong>, y <strong>TODOS los respaldos de log</strong> posteriores.</p>
+                    <div class="code-block mt-2">
+-- 1. Restaurar Completo (NORECOVERY)
+-- 2. Restaurar Diferencial (NORECOVERY)
+-- 3. Restaurar Log 1 (NORECOVERY)
+-- 4. Restaurar Log 2 (NORECOVERY)
+-- 5. ...
+-- 6. Restaurar Último Log (RECOVERY)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Advanced Techniques -->
+        <section id="advanced" class="content-section">
+            <h1 class="text-4xl font-bold mb-4 text-gray-800">Técnicas Avanzadas de Recuperación</h1>
+            <p class="mb-8 text-lg">Más allá de los respaldos básicos, existen técnicas avanzadas para escenarios críticos. Esta sección interactiva te permite desplegar y conocer en detalle la recuperación a un punto en el tiempo (PITR), la replicación de datos y el clustering de alta disponibilidad, entendiendo cómo cada una aborda los desafíos de RPO y RTO.</p>
+
+            <div class="space-y-4">
+                <div class="card" data-accordion="item">
+                    <button class="w-full text-left p-6 flex justify-between items-center">
+                        <h3 class="text-2xl font-bold">Recuperación a un Punto en el Tiempo (PITR)</h3>
+                        <span class="text-2xl font-thin transform transition-transform">+</span>
+                    </button>
+                    <div class="accordion-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out">
+                        <div class="p-6 pt-0">
+                            <p>Permite restaurar una base de datos a un momento exacto, ideal para corregir errores humanos. Requiere respaldos de log.</p>
+                            <p class="mt-2 font-semibold">Escenario: Borrado accidental a las 10:05 AM. Restaurar a las 10:04 AM.</p>
+                            <div class="code-block mt-2">
+-- Restaurar a una copia para no tocar la producción
+RESTORE DATABASE MiEmpresaDB_Copia ... WITH NORECOVERY;
+RESTORE LOG MiEmpresaDB_Copia ... WITH NORECOVERY;
+RESTORE LOG MiEmpresaDB_Copia ... WITH STOPAT = '2025-08-14T10:04:00', RECOVERY;
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-accordion="item">
+                    <button class="w-full text-left p-6 flex justify-between items-center">
+                        <h3 class="text-2xl font-bold">Replicación de Bases de Datos</h3>
+                        <span class="text-2xl font-thin transform transition-transform">+</span>
+                    </button>
+                    <div class="accordion-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out">
+                        <div class="p-6 pt-0">
+                            <p>Mantiene una copia (réplica) de la base de datos en un servidor secundario.</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1">
+                                <li><strong>Síncrona:</strong> Cero pérdida de datos (RPO=0) pero puede añadir latencia.</li>
+                                <li><strong>Asíncrona:</strong> No impacta el rendimiento pero hay riesgo de pérdida mínima de datos.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" data-accordion="item">
+                    <button class="w-full text-left p-6 flex justify-between items-center">
+                        <h3 class="text-2xl font-bold">Clustering y Alta Disponibilidad (HA)</h3>
+                        <span class="text-2xl font-thin transform transition-transform">+</span>
+                    </button>
+                    <div class="accordion-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out">
+                        <div class="p-6 pt-0">
+                            <p>Un grupo de servidores que trabajan juntos para aumentar la disponibilidad. Si el servidor activo falla, uno pasivo toma su lugar automáticamente (failover). Ofrece un RTO muy bajo (segundos a minutos) pero no protege contra corrupción de datos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Simulation -->
+        <section id="sim" class="content-section">
+            <h1 class="text-4xl font-bold mb-4 text-gray-800">Simulación de Escenarios de Recuperación</h1>
+            <p class="mb-8 text-lg">La teoría solo llega hasta cierto punto. Un plan de recuperación es inútil si no se prueba. Usa este simulador para seleccionar diferentes escenarios de desastre y ver el plan de acción recomendado para cada uno. Esto te ayudará a entender la aplicación práctica de las estrategias de recuperación.</p>
+
+            <div class="card p-6">
+                <h3 class="text-2xl font-bold mb-4">Simulador de Desastres</h3>
+                <label for="scenario-select" class="block mb-2 font-semibold">Selecciona un escenario:</label>
+                <select id="scenario-select" class="w-full p-2 border rounded-lg mb-6">
+                    <option value="disk_failure">Falla de Disco Duro</option>
+                    <option value="drop_table">Borrado Accidental de Tabla (`DROP TABLE`)</option>
+                    <option value="data_corruption">Corrupción de Datos Lógica</option>
+                    <option value="natural_disaster">Desastre Natural (Incendio)</option>
+                </select>
+
+                <div id="scenario-details">
+                    <!-- Content will be injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Tools -->
+        <section id="tools" class="content-section">
+            <h1 class="text-4xl font-bold mb-4 text-gray-800">Herramientas y Utilidades</h1>
+            <p class="mb-8 text-lg">Una estrategia de recuperación se apoya en herramientas robustas. Esta sección ofrece un panorama de las utilidades disponibles, desde las nativas de los principales SGBD hasta soluciones comerciales de terceros y servicios en la nube. Conocer estas herramientas es clave para implementar y automatizar tu plan de protección de datos.</p>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-3">Herramientas Nativas</h3>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>SQL Server:</strong> SSMS, T-SQL</li>
+                        <li><strong>Oracle:</strong> RMAN</li>
+                        <li><strong>PostgreSQL:</strong> pg_dump, pg_restore</li>
+                    </ul>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-3">Software de Terceros</h3>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Veeam Backup & Replication</li>
+                        <li>Commvault</li>
+                        <li>Acronis Cyber Protect</li>
+                    </ul>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-3">Servicios en la Nube (BaaS)</h3>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Azure Backup</li>
+                        <li>AWS Backup</li>
+                        <li>Google Cloud Backup and DR</li>
+                    </ul>
+                </div>
+                 <div class="card p-6 md:col-span-2 lg:col-span-3">
+                    <h3 class="text-xl font-bold mb-3">La Regla de Oro: 3-2-1</h3>
+                    <p class="text-center text-lg">Mantén siempre...</p>
+                    <div class="grid grid-cols-3 gap-4 text-center mt-4">
+                        <div>
+                            <p class="text-4xl font-bold text-brown-700">3</p>
+                            <p>Copias de tus datos</p>
+                        </div>
+                        <div>
+                            <p class="text-4xl font-bold text-brown-700">2</p>
+                            <p>Tipos de medios diferentes</p>
+                        </div>
+                        <div>
+                            <p class="text-4xl font-bold text-brown-700">1</p>
+                            <p>Copia fuera del sitio (Off-site)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Navigation
+            const navLinks = document.querySelectorAll('#main-nav a');
+            const sections = document.querySelectorAll('.content-section');
+
+            function setActiveLink(hash) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.hash === hash);
+                });
+                sections.forEach(section => {
+                    section.classList.toggle('active', '#' + section.id === hash);
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    window.location.hash = this.hash;
+                });
+            });
+
+            window.addEventListener('hashchange', () => {
+                const hash = window.location.hash || '#intro';
+                setActiveLink(hash);
+            });
+            
+            // Initial load
+            const initialHash = window.location.hash || '#intro';
+            setActiveLink(initialHash);
+
+            // Doughnut Chart for Data Loss Causes
+            const causesCtx = document.getElementById('causesChart').getContext('2d');
+            new Chart(causesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Falla de Hardware', 'Error Humano', 'Falla de Software', 'Ataques Cibernéticos', 'Desastres Naturales'],
+                    datasets: [{
+                        label: 'Causas de Pérdida de Datos',
+                        data: [40, 29, 13, 7, 5],
+                        backgroundColor: [
+                            '#795548',
+                            '#A1887F',
+                            '#D7CCC8',
+                            '#BCAAA4',
+                            '#8D6E63'
+                        ],
+                        borderColor: '#f8f7f4',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Backup Type Toggles
+            const backupButtons = document.querySelectorAll('.backup-btn');
+            const backupContents = document.querySelectorAll('.backup-content');
+            backupButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const type = button.dataset.type;
+                    
+                    backupButtons.forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    button.classList.add('btn-primary');
+                    button.classList.remove('bg-gray-200', 'text-gray-700');
+
+                    backupContents.forEach(content => {
+                        if (content.id === `${type}-content`) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Accordion
+            const accordionItems = document.querySelectorAll('[data-accordion="item"]');
+            accordionItems.forEach(item => {
+                const button = item.querySelector('button');
+                const content = item.querySelector('.accordion-content');
+                const icon = button.querySelector('span');
+
+                button.addEventListener('click', () => {
+                    const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    
+                    // Close all others
+                    accordionItems.forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.querySelector('.accordion-content').style.maxHeight = '0px';
+                            otherItem.querySelector('button span').classList.remove('rotate-45');
+                        }
+                    });
+
+                    // Toggle current
+                    if (isOpen) {
+                        content.style.maxHeight = '0px';
+                        icon.classList.remove('rotate-45');
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.classList.add('rotate-45');
+                    }
+                });
+            });
+
+            // Scenario Simulator
+            const scenarioSelect = document.getElementById('scenario-select');
+            const scenarioDetails = document.getElementById('scenario-details');
+            const scenarios = {
+                disk_failure: {
+                    title: 'Escenario: Falla de Disco Duro',
+                    incident: 'El disco que contiene los archivos de datos falla. La base de datos se marca como `SUSPECT`.',
+                    plan: [
+                        '<strong>Diagnóstico:</strong> Confirmar la falla de hardware.',
+                        '<strong>Reemplazo:</strong> Reemplazar el disco duro defectuoso.',
+                        '<strong>Restauración:</strong> Restaurar el último respaldo <strong>completo</strong> (WITH NORECOVERY), luego el último <strong>diferencial</strong> (WITH NORECOVERY), y finalmente aplicar todos los respaldos de <strong>log</strong> en secuencia (terminando con WITH RECOVERY).',
+                        '<strong>Verificación:</strong> Realizar pruebas para asegurar la integridad de los datos.'
+                    ]
+                },
+                drop_table: {
+                    title: 'Escenario: Borrado Accidental de Tabla',
+                    incident: 'Un usuario con demasiados privilegios elimina accidentalmente la tabla de clientes a las 11:30 AM.',
+                    plan: [
+                        '<strong>¡NO TOCAR LA BD ORIGINAL!</strong> Mantener la calma.',
+                        '<strong>Identificar</strong> la hora exacta del desastre.',
+                        'En un <strong>servidor secundario</strong>, restaurar la base de datos a un punto en el tiempo justo antes del `DROP` (ej. 11:29 AM) usando PITR.',
+                        '<strong>Exportar</strong> la tabla `Clientes` de la base de datos recuperada.',
+                        '<strong>Importar</strong> la tabla a la base de datos de producción original.'
+                    ]
+                },
+                data_corruption: {
+                    title: 'Escenario: Corrupción de Datos Lógica',
+                    incident: 'Una actualización de software defectuosa ha estado escribiendo datos incorrectos en la tabla de `Facturas` durante las últimas 48 horas.',
+                    plan: [
+                        '<strong>Detener la Causa:</strong> Desactivar la aplicación o proceso que está causando la corrupción.',
+                        '<strong>Investigación:</strong> Determinar el alcance del daño y cuándo comenzó.',
+                        '<strong>Recuperación Compleja:</strong> Restaurar una copia de la BD de hace 48 horas y escribir un script para identificar y transferir solo los datos válidos a producción, para evitar perder 48h de datos válidos de otras tablas.'
+                    ]
+                },
+                natural_disaster: {
+                    title: 'Escenario: Desastre Natural (Incendio)',
+                    incident: 'Un incendio destruye el centro de datos principal.',
+                    plan: [
+                        '<strong>Declarar el Desastre:</strong> Activar el Plan de Recuperación de Desastres (DRP).',
+                        '<strong>Sitio Secundario:</strong> El personal clave se dirige al sitio de recuperación secundario (DR site).',
+                        '<strong>Restauración Off-site:</strong> Usar los respaldos almacenados fuera del sitio para restaurar los sistemas críticos.',
+                        '<strong>Redirección:</strong> Cambiar los registros DNS para que el tráfico apunte al sitio de DR.',
+                        '<strong>Comunicación:</strong> Notificar a empleados y clientes sobre el estado del servicio.'
+                    ]
+                }
+            };
+
+            function displayScenario(scenarioKey) {
+                const scenario = scenarios[scenarioKey];
+                let planHtml = scenario.plan.map(step => `<li class="mb-2">${step}</li>`).join('');
+                scenarioDetails.innerHTML = `
+                    <h4 class="text-xl font-bold mb-2">${scenario.title}</h4>
+                    <p class="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-r-lg"><strong>Incidente:</strong> ${scenario.incident}</p>
+                    <h5 class="font-semibold mb-2">Plan de Acción:</h5>
+                    <ol class="list-decimal list-inside space-y-2">${planHtml}</ol>
+                `;
+            }
+
+            scenarioSelect.addEventListener('change', (e) => displayScenario(e.target.value));
+            // Initial display
+            displayScenario(scenarioSelect.value);
+        });
+    </script>
+</body>
+</html>

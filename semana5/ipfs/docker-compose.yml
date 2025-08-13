@@ -1,0 +1,42 @@
+services:
+  # Nodo A - Nuestro primer nodo, actuará como punto de encuentro (bootstrap)
+  ipfs-node-a:
+    image: ipfs/kubo:latest
+    container_name: ipfs-node-a
+    hostname: ipfs-node-a
+    ports:
+      - "4001:4001" # Puerto Swarm (TCP)
+      - "5001:5001" # Puerto API
+      - "8080:8080" # Puerto Gateway y WebUI
+    volumes:
+      - ipfs-data-a:/data/ipfs
+    networks:
+      - p2p-network
+
+  # Nodo B - Se conectará a nuestra red a través del Nodo A
+  ipfs-node-b:
+    image: ipfs/kubo:latest
+    container_name: ipfs-node-b
+    hostname: ipfs-node-b
+    volumes:
+      - ipfs-data-b:/data/ipfs
+    networks:
+      - p2p-network
+
+  # Nodo C - Otro par en la red
+  ipfs-node-c:
+    image: ipfs/kubo:latest
+    container_name: ipfs-node-c
+    hostname: ipfs-node-c
+    volumes:
+      - ipfs-data-c:/data/ipfs
+    networks:
+      - p2p-network
+
+volumes:
+  ipfs-data-a:
+  ipfs-data-b:
+  ipfs-data-c:
+
+networks:
+  p2p-network:
