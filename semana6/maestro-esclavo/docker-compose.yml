@@ -1,32 +1,52 @@
 services:
-  master:
-    image: postgres:15.3
-    container_name: pg-master
-    restart: always
-    ports:
-      - "5432:5432"
+  pg-primary:
+    image: postgres:16
+    container_name: pg-primary
+    ports: ["5432:5432"]
     environment:
-      POSTGRES_USER: replicator
-      POSTGRES_PASSWORD: replica_pass
-      POSTGRES_DB: demo
+      POSTGRES_PASSWORD: postgres
+    command: ["postgres",
+      "-c","wal_level=replica",
+      "-c","max_wal_senders=10",
+      "-c","max_replication_slots=10",
+      "-c","listen_addresses=*",
+      "-c","hba_file=/etc/postgresql/pg_hba.conf"
+    ]
     volumes:
-      - ./master:/var/lib/postgresql/conf
-    command: >
-      postgres -c config_file=/var/lib/postgresql/conf/postgresql.conf
+      - ./primary/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./primary/init:/docker-entrypoint-initdb.d
+      - primary-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [pgnet]
 
-  slave:
-    image: postgres:15.3
-    container_name: pg-slave
-    restart: always
-    ports:
-      - "5433:5432"
+  pg-replica:
+    image: postgres:16
+    container_name: pg-replica
+    ports: ["5433:5432"]
     environment:
-      POSTGRES_USER: replicator
-      POSTGRES_PASSWORD: replica_pass
-      POSTGRES_DB: demo
-    depends_on:
-      - master
+      POSTGRES_PASSWORD: postgres
+    command: ["postgres",
+      "-c","hot_standby=on",
+      "-c","listen_addresses=*"
+    ]
     volumes:
-      - ./slave:/var/lib/postgresql/conf
-    command: >
-      postgres -c config_file=/var/lib/postgresql/conf/postgresql.conf
+      - replica-data:/var/lib/postgresql/data
+    depends_on:
+      - pg-primary
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [pgnet]
+
+
+volumes:
+  primary-data:
+  replica-data:
+networks:
+  pgnet:
