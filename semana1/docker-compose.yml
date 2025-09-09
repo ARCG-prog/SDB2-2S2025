@@ -11,20 +11,6 @@ services:
       - POSTGRES_DB=bases2-db
     volumes:
       - ./postgres:/var/lib/postgresql/data
-  
-  pdAdmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4
-    restart: always
-    depends_on:
-      - myDB
-    ports:
-      - 8080:80
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=fernando@google.com
-      - PGADMIN_DEFAULT_PASSWORD=123456
-    volumes:
-      - ./pgadmin:/var/lib/pgadmin
-      - ./pgadmin:/certs/server.cert
-      - ./pgadmin:/certs/server.key
-      - ./pgadmin:/pgadmin4/servers.json
+      - ./pgbackrest_repo:/var/lib/pgbackrest       # Carpeta para backups
+      - ./pgbackrest_conf:/etc/pgbackrest           # Configuración de pgBackRest
+      - C:/Users/aleja/Downloads:/var/lib/postgresql/data_import
