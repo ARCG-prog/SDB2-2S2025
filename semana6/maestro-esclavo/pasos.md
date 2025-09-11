@@ -86,43 +86,7 @@ docker exec -it pg-primary psql -U app -d demo -c "SELECT current_database(), cu
 #  demo             | app
 ```
 
-5. Agregamos un esclavo :
-```yaml
-services:
-    pg-replica:
-        image: postgres:16
-        container_name: pg-replica
-        ports: ["5433:5432"]
-        environment:
-        POSTGRES_PASSWORD: postgres
-        command: ["postgres",
-        "-c","hot_standby=on",
-        "-c","listen_addresses=*"
-        ]
-        volumes:
-        - replica-data:/var/lib/postgresql/data
-        depends_on:
-        - pg-primary
-        healthcheck:
-        test: ["CMD-SHELL","pg_isready -U postgres"]
-        interval: 5s
-        timeout: 3s
-        retries: 30
-        networks: [pgnet]
-
-volumes:
-    primary-data:
-    replica-data:
-networks:
-    pgnet:
-```
-
-6. Corremos el esclavo:
-```bash
-docker compose up -d pg-replica
-```
-
-7. Verificamos el slot del esclavo:
+5. Verificamos el slot del esclavo:
 ```bash
 docker exec -it pg-primary psql -U postgres -c "SELECT slot_name, active FROM pg_replication_slots WHERE slot_name='replica1';"
 #   slot_name | active 
@@ -130,7 +94,7 @@ docker exec -it pg-primary psql -U postgres -c "SELECT slot_name, active FROM pg
 #  (0 rows)
 ```
 
-8. Configuramos el slot:
+6. Configuramos el slot:
 ```bash
 docker exec -it pg-primary psql -U postgres -v ON_ERROR_STOP=1 -c "SELECT pg_create_physical_replication_slot('replica1');"
 #  pg_create_physical_replication_slot 
@@ -138,17 +102,39 @@ docker exec -it pg-primary psql -U postgres -v ON_ERROR_STOP=1 -c "SELECT pg_cre
 #  (replica1,)
 ```
 
-9. Verificamos el slot nuevamente:
+7. Verificamos el slot nuevamente:
 ```bash
 docker exec -it pg-primary psql -U postgres -c "SELECT slot_name, active FROM pg_replication_slots WHERE slot_name='replica1';"
 #  slot_name | active 
 # -----------+--------
 #  replica1  | f
 ```
-
-10. Reconectamos el esclavo:
+8. Lanzamos un contenedor one-off con la misma imagen del replica para ejecutar el basebackup
 ```bash
-docker restart pg-replica
+docker compose run --rm -u postgres --entrypoint bash pg-replica -lc "
+set -e
+rm -rf /var/lib/postgresql/data/*
+export PGPASSWORD='replica_pass'
+# -R escribe standby.signal y primary_conninfo
+# -X stream trae WAL en caliente
+# -S replica1 usa el slot físico ya creado
+pg_basebackup -h pg-primary -U replicator -D /var/lib/postgresql/data -X stream -R -S replica1 -v
+# (Opcional) fija application_name por claridad en el primario:
+echo \"primary_conninfo = 'host=pg-primary port=5432 user=replicator password=replica_pass application_name=replica1'\" >> /var/lib/postgresql/data/postgresql.auto.conf
+"
+```
+
+9. Corremos el esclavo:
+```bash
+docker compose up -d pg-replica
+```
+
+10. Verificamos que el esclavo esté en modo recuperación:
+```bash
+docker exec -it pg-replica psql -U postgres -c "SELECT pg_is_in_recovery();"
+#  pg_is_in_recovery 
+# -------------------
+#  t
 ```
 
 11. Comprobamos:
